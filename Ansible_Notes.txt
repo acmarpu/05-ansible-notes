@@ -1,0 +1,1041 @@
+The primary difference for their community versions is that Ansible is an multi-purpose automation tool, 
+where as Terraform is an infrastructure as code tool
+
+### Configuration Management tools
+* For any application to work we need some softwares.
+* Options for installing necessary softwares and deploying application
+
+## Manual
+* Administrator will install the necessary softwares
+* admin will deploy the application
+* probleam
+  * slow
+  * Error Prone
+
+## Shell/PowerShell Scripts
+* Create a shell/powershellscript to perform deployment
+* Porblems
+ * Multipile ways of doing the same activity.  Beacuse it impacts readability and Maintainability
+ * Every script has assumptions
+ * Script are procedural (how it has to done)
+
+## Configuration Management
+* in this user will write the desired state
+* Script are Declarative (what has to be done)
+* the major them is to maintain desired state.
+* CM has an idempotent property call as __idempotance__
+
+## Ansible Falls under Push based Configuration Management
+
+
+## Ansible Control server
+
+* Ansible is push based CM tool by Default
+* Software requirements of ansible
+* Ansible control Server :
+  * Python 
+  * Ansible
+* nodes
+  * Python
+
+### What do the user need to provide to ansible
+* Playbook:
+   * Written in __YAML__
+   * YAML is all about data representation
+* Inventory
+   * List of nodes to be used by Ansible Control
+
+
+___________________________________________________________________________________________________
+
+
+## Ansible Installation
+
+1. Create two vm with minimal size
+2. tag one vm as ACS and other as Node
+3. Login into ACS and become root user
+4. Enable Password Based Authentication on ACS and Node
+	
+	vi /etc/ssh/sshd_config
+	Change the content
+	PasswordAuthentication no to PasswordAuthentication Yes
+	service ssh restart
+	service sshd reload
+	systemctl restart sshd.service
+		
+5. Create a user _devops_ and give sudo permission on ACS and Node
+	adduser username
+	admin user permission
+	$ visudo # in the file opend add below command 
+	master ALL=(ALL:ALL) NOPASSWD:ALL
+	to test for run apt-get update # should not ask the password
+
+6. install python / install Ansible on ACS
+    * https://docs.ansible.com/ansible/latest/installation_guide/installation_distros.html#installing-ansible-on-ubuntu
+    $ python --version
+	$ sudo apt update # ACS and Node
+	$ sudo apt install software-properties-common # ACS and Node
+	$ sudo add-apt-repository --yes --update ppa:ansible/ansible # ACS and Node
+	$ sudo apt install ansible # ACS not in Node
+	$ sudo apt-get install python -y ## In node only
+	$ ansible --version # ACS 
+
+ first try to ssh with newly created users to 
+
+7. repeat the steps from 3 to 6 times on _node-1_
+
+8. login into ACS and configure password less login into nodes
+	login in to ACS using created user
+	$ ssh-keygen # Keys are created in .ssh directory under user's HOME directory
+	$ verify files ls ~/.ssh/
+	## ssh-copy-id -i /root/.ssh/ansible-master.pub node@10.1.0.6
+	$ ssh-copy-id devops@<node private ip> # copy key to node
+	$ ssh-copy-id devops@<local host> # copy key to ACS
+    $ ssh <node ip>	 # to test connectivity
+	$ you can copy localhost keys also
+	  ssh-copy-id username@localhost
+
+
+9. Ansible installed on below pwd
+    $ cd /etc/ansible/
+	$ for best practic take backup Default Host file 
+	$ mv hosts host.bak # copie the orignam file
+	$ vi hosts # add nodes ip in ACS ansible host file 
+	$ add localhosr for ACS
+
+10. ping node from ACS
+    $ ansible -m ping all/<ip address>
+
+
+_____________________________________________________________________________________________________________________________________
+	
+## How to think in Ansible
+	* Given any task, list down all the steps
+	* In ansible you need express them with Desired State
+	* For that we start with ansible Playbook
+	* Each step ~> task in ansible playbook
+	* In Ansible, Task are executed by _module_
+# __Module__ are atomic init of ansible which perform Execution/automation
+# in Ansible There are loads of modules {https://docs.ansible.com/ansible/2.9/modules/list_of_all_modules.html}
+
+
+### Some Practical Excersize to deploy manually
+# Deploy Springpet clinic
+
+sudo apt-cache search jdk | less
+sudo apt-get install openjdk-8-jdk -y
+java -version
+wget https://referenceapplicationskhaja.s3.us-west-2.amazonaws.com/spring-petclinic-2.4.2.jar
+java -jar spring-petclinic-2.4.2.jar
+access application  http://<vm public ip>:8080/
+
+______________________________________________________
+# StudentCourses
+
+sudo apt-get update
+sudo apt-get install python3
+sudo apt-get install python3 python3-pip git -y
+git clone https://github.com/DevProjectsForDevOps/StudentCoursesRestAPI
+cd StudentCoursesRestAPI
+pip3 install -r requirements.txt
+python3 app.py
+access application http://<vm public ip>:8080/
+
+
+_________________________________________________________________________________________________________________________________________
+
+## How to automate application deployment using Ansible 
+	* Ansible Expect to automate using Playbooks
+	* Playbooks is YAML with predifined Structure
+	
+## Using Ansible for deployment of Sample Application
+    * This can be done by writing Playbook
+	* To write effective Playbook, we need to know
+	   % YAML
+	   % Module
+	   % Tasks
+	   % Ansible-Environment Variables
+	   % Inventory
+	   % Ansible Configuration
+### YAML
+ * is mucph like json
+ * it is collection of name value Parallelism
+ * 
+
+## Playbooks Structure
+	* Host : On which nodes defined in _Inventory_ do you want to execute the playbook
+	* Syntax of Hosts: Name Value pair
+
+hosts:all
+    * remote_user: User which ansible execute your automaton.
+	* Become:  Do you want run the playbook using sudo (set boolean value)
+	
+* Tasks: list of individual task
+* Task : writing some of task properties-common
+	
+- hosts: all
+  becomes: yes
+  tasks:
+  - name: install git
+    package:
+	  name: git
+	  state: present
+  - name: uninstall git
+    package: 
+	  name: git
+	  state: absent
+	  
+## Expressing the above Manual Execution In Ansible
+	* Inventory: i need a list with IP addresses/dns names(fqdn)
+	* Playbook lets write the basic structure
+
+Module: Module are smallest ubit of work in Ansible
+There are predefined Module. You can also define custom module to automate the activity
+
+-----------------------------------------------------------------------------------------
+- hosts: all
+  becomes: yes
+  tasks:
+  - name: update ubuntu packages and install free
+    apt:
+	  name: tree
+	  update_cache: yes
+	  state: present
+	  
+### Ansible provisioning
+	Create mkdir tetsplaybooks
+	cd tetsplaybooks
+	vi tetsinventory # Create an inventory file with ip address in each line 
+	vi tree-playbook.yaml 
+	ansible-playbook --help | less
+
+	ansible-playbook -i tetsinventory tree-playbook.yaml
+
+-----------------------------------------------------------------------------------------	
+
+### Execution in Ansible
+->	Two possibilites
+** Playbook
+	Must if you are automating and also if it is frequnt activity
+	can execute multipile module from one play book
+** Adhoc-Command
+	Infrequently used activites use adhoc commands
+	can execute only one module per command
+
+Playbook Ex:-
+hosts: all
+tasks: 
+  - name: ping the nodes
+    ping:
+
+Adhoc-Command Ex:-	
+ansible -i <inventory file> -m ping all
+ansible -m ping -i tetsinventory all
+ansible -i newinventory -m ping all
+
+
+## Stress execution in two ways
+# Playbook
+Bash : sudo apt-get install stress -yaml
+
+- hosts: all
+  become:yes
+  tasks:
+    - name: install stress
+	  apt:
+	    name: stress
+		state: present
+
+# Command
+ansible -i <inventory path> -m <module name> -a "param1-value1"   "param=value" [-b] <all>
+ansible -i newinventory -m apt -a "name=stress state=present" -b all
+ansible -i newinventory -m apt -a "name=stress state=absent" -b all
+
+try to execute 2_ping_tree.yml playbook in host vm
+
+### Playbook
+
+* Each Play in a playbook defines the phase/kind of activity
+  Generally playbook divided into following plays as best practic
+	* Pre-Deployment: Installing necessary software
+	* Deployment: Deploying the newly built package to the server
+	* Post-deployment: Mostly cleanup activites
+
+Ansible module like command, bash, shell etc are not idempotent (they will never check, blindly execute)
+
+
+## Widely used Module
+
+ * Installations:
+   * apt
+   * yum
+   * package
+
+ * Services:
+   * service
+   * systemd
+
+ * Files
+   * file
+   * get_url
+
+ * Temlating
+   * template
+
+----------------------------------------------------------------------------------------------------
+## Sample Deployment in Ansible
+* try to install apache with PHP module
+
+* Ubuntu Steps
+
+sudo apt-get update
+sudo apt-get install apache2 -yaml
+sudo systemctl enable apache2
+sudo apt-get install php libapache2-mod-php php-mysql php-cli -yaml
+sudo vi /var/www/html/info.php
+<?php
+phpinfo();
+?>
+sudo systemctl restart apache2
+
+* CentOS Steps:
+
+sudo yum install httpd -y
+sudo systemctl enable httpd
+sudo yum install php php-mysql
+sudo vi /var/www/html/info.php
+<?php
+phpinfo();
+?>
+
+sudo systemctl restart httpd
+
+
+***********************************************
+- host: all
+  become: yes
+  tasks:
+    - name: install apache2 and update package
+	  apt:
+	    name: apache2
+		update_cache:yes
+		state: present
+	- name: enable and restart apache2 service
+	  service:
+	    name: apache2
+		enable: yes
+		state: restarted
+	- name: install php
+	  apt:
+	    name: php
+		state: present
+	- name: install libapache2-mod-php
+	  apt:
+	    name: libapache2-mod-php
+		state: present
+	- name: install php-mysql
+	  apt:
+	    name: php-mysql
+		state: present
+	- name: php-cli
+	  apt
+	    name: php-cli
+		state: present
+    - name: restart apache2
+	  service:
+	    name: apache2
+		state: restarted
+***********************************************************
+## Ansible Handlers
+-> lamp_ubunt.yaml
+- host: all
+  become: yes
+  tasks:
+    - name: install apache2 and update package
+	  apt:
+	    name: apache2
+		update_cache:yes
+		state: present
+      notify:
+	    - restart and enable apache2
+	- name: install php
+	  apt:
+	    name: php
+		state: present
+	- name: install libapache2-mod-php
+	  apt:
+	    name: libapache2-mod-php
+		state: present
+	- name: install php-mysql
+	  apt:
+	    name: php-mysql
+		state: present
+	- name: php-cli
+	  apt
+	    name: php-cli
+		state: present
+      notify:
+	    - restart and enable apache2
+  handlers:
+    - name: restart and enable apache2
+	  service:
+	    name: apache2
+		enabled: yes
+		state: restarted 
+
+
+***********************************************
+-> lamp_redhat.yaml
+
+- host: all
+  become: yes
+  tasks:
+    - name: install httpd
+	  yum:
+	    name: httpd
+		state: present
+	  notify:
+	    - restart and enable httpd
+	 
+	- name: install php
+	  yum:
+	    name: php
+		state: present
+	- name: install php-mysql
+	  yum:
+	    name: php-mysql
+		state: present
+	  notify:
+	    - restart and enable httpd
+	- name: install php-mysql
+	  yum:
+	    name: php-mysql
+		state: present
+       notify:
+	    - restart and enable httpd
+  handlers:
+    - name: restart and enable httpd
+	  service:
+	    name: httpd
+		enable: yes
+		state: restarted
+
+##################################################################
+## Ansible Handlers with LOOPS
+
+now in the playbooks we can write in a simplied way using looping constructs
+
+-> lamp_ubunt.yaml
+- host: all
+  become: yes
+  tasks:
+    - name: install apache2 and update package
+	  apt:
+	    name: apache2
+		update_cache:yes
+		state: present
+      notify:
+	    - restart and enable apache2
+	- name: install php module
+	  apt:
+	    name: {{item}}
+		state: present
+	  loop:
+	    - php
+		- libapache2-mod-php
+		- php-mysql
+		- php-cli
+	  notify:
+	    - restart and enable apache2
+  handlers:
+    - name: restart and enable apache2
+	  service:
+	    name: apache2
+		enabled: yes
+		state: restarted 
+
+
+*******************************************************
+-> lamp_redhat.yaml
+
+- host: all
+  become: yes
+  tasks:
+    - name: install httpd
+	  yum:
+	    name: httpd
+		state: present
+	  notify:
+	    - restart and enable httpd
+	 
+	- name: install php module
+	  yum:
+	    name: {{item}}
+		state: present
+	  loop:
+	    - php
+		- php-mysql
+	  notify:
+	    - restart and enable httpd
+  handlers:
+    - name: restart and enable httpd
+	  service:
+	    name: httpd
+		enable: yes
+		state: restarted
+
+#########################################################
+Singal Playbook for multipile OS
+Run apt tasks only on ubuntu and yum tasks only on redhat machines
+to do this ansible facts come to the resue
+
+ansible -m setup -i hosts -a "filter=*os*" all    # verify the OS
+ansible -m setup -i hosts -a "filter=*distribution*" all  # verify the OS
+##Ansible Facts:
+Facts are information about the node.
+Facts can be gathered using setup module
+Facts can be used in the playbook directly facts_name or by using
+expression {{facts_name}}
+
+## Ansible conditions
+
+when: ansible_os_family == "RedHat"     # Old
+when: ansible_facts['os_family'] == "RedHat"   # New
+
+
+- host: all
+  become: yes
+  tasks:
+    - name: install httpd
+	  yum:
+	    name: httpd
+		state: present
+	  notify:
+	    - restart and enable httpd
+	  when: ansible_facts['os_family'] == "RedHat"
+	- name: install php module
+	  yum:
+	    name: {{item}}
+		state: present
+	  loop:
+	    - php
+		- php-mysql
+	  notify:
+	    - restart and enable httpd
+	  when: ansible_facts['os_family'] == "RedHat"
+		
+	- name: install apache2 and update package
+	  apt:
+	    name: apache2
+		update_cache:yes
+		state: present
+      notify:
+	    - restart and enable apache2
+	  when: ansible_facts['os_family'] == "Debian"
+		
+	- name: install php module
+	  apt:
+	    name: {{item}}
+		state: present
+	  loop:
+	    - php
+		- libapache2-mod-php
+		- php-mysql
+		- php-cli
+	  notify:
+	    - restart and enable apache2
+	  when: ansible_facts['os_family'] == "Debian"
+		
+  handlers:
+    - name: restart and enable httpd
+	  service:
+	    name: httpd
+		enable: yes
+		state: restarted
+	  when: ansible_facts['os_family'] == "Redhat"
+	- name: restart and enable apache2
+	  service:
+	    name: apache2
+		enabled: yes
+		state: restarted 
+	  when: ansible_facts['os_family'] == "Debian"
+
+
+#################################################################
+
+## install git on both the machines Ubuntu and RedHat
+- host:all
+  become: yes
+  tasks:
+    - name: install git
+	  package:
+	    name: git
+		state: present
+
+###################################################################
+
+## Goal: write Common Tasks and Handlers
+* to replace apt or yum we can use package module. in the current scenario,
+	package names are diffrent for Redhat and Ubuntu
+* lets use Ansible Variables to remove the package name hard coding
+* Approach 1: Define Variables in inventory files
+* Initial Inventory looks as shown below
+[Ubuntu]
+172.16.1.1
+
+[RedHat]
+172.16.22.3
+
+[webservers]
+172.16.3.3
+172.31.25.93
+
+* Lets add the variable _package_name_ to webserver group as shown below
+[webserver]
+172.16.3.3 package_name=apache2
+172.31.25.93 package_name=httpd
+
+---
+- host: webservers
+  become: yes
+  tasks:
+    - name: install apache
+	  package
+	    name: {{package_name}}
+		state: present
+	  notify:
+	    - restart and enable apache
+	  when: ansible_facts['os_family'] == "RedHat" or ansible_facts['os_family'] == "Debian"
+	  
+  handlers:
+    - name: restart and enable apache
+	  service:
+	    name: {{package_name}}
+		enabled: yes
+		state: restarted 
+	  when: ansible_facts['os_family'] == "RedHat" or ansible_facts['os_family'] == "Debian"
+
+##################################################################
+## Host file in YAML
+all:
+  hosts:
+    172.31.26.196
+	172.31.25.93
+  children:
+    webservers:
+	  hosts:
+	    172.31.26.196:
+		  package_name: apache2
+		  php_modules:
+		    - php
+			- libapache2-mod-php
+			- php-mysql
+			- php-cli
+		172.31.25.93:
+		  package_name: httpd
+		  php_modules:
+		    - php
+			
+*************************************
+- host: all
+  become: yes
+  tasks:
+    - name: install apache
+	  package
+	    name: {{package_name}}
+		state: present
+	  notify:
+	    - restart and enable apache
+	  when: ansible_facts['os_family'] == "RedHat" or ansible_facts['os_family'] == "Debian"
+	  
+	- name: printing php module
+	  debug:
+	    var: php_modules
+	- name: install php modules
+      package:
+        name: {{item}}
+        state: present	
+      notify:
+	    - restart and enable apache
+	  when: ansible_facts['os_family'] == "RedHat" or ansible_facts['os_family'] == "Debian"
+      loop: "{{php_modules}}"
+		
+  handlers:
+    - name: restart and enable apache
+	  service:
+	    name: {{package_name}}
+		enabled: yes
+		state: restarted 
+	  when: ansible_facts['os_family'] == "RedHat" or ansible_facts['os_family'] == "Debian"
+	  
+	  
+####################################################################
+## Ansible Variables Files
+* Rather than having inventory and variables defined in same file
+lets use variable file
+* Variables files are of two categories
+	* group_vars
+	* host_vars
+* Directory Structure should
+	* Playbook
+	* Inventory
+	* group_vars
+		* group_name
+	* host_vars
+	    * host_name
+
+the directory structure would be
+  * lamp.yml
+  * hosts
+  * group_vars 
+      * webservers
+	  * redhat
+	  * ubuntu
+  * host_vars
+      * 172.31.26.196
+	  * 172.31.26.93
+Create files in the group_vars and host_vars
+-> create fiel hosts add 
+
+[RedHat]
+172.16.22.3
+
+[RedHat]
+172.16.22.3
+
+[webservers]
+172.16.3.3
+172.31.25.93
+
+-> create group_vars folder and in that folder create webserver file
+mkdir group_vars
+toudh group_vars/webservers
+vi group_vars/webservers
+
+---
+package_name: httpd
+php_modules:
+  - php
+  
+probleam is this will apply on both the machines
+
+mkdir host_vars
+toudh host_vars/172.31.26.196 #ubuntu
+vi group_vars/172.31.26.196
+
+---
+package_name: apache2
+
+group var will apply all the members in the group
+host variable will apply on the perticuler host
+
+##################################################################
+
+## Copy file from internet to ansible
+
+- host: all
+  become: yes
+  tasks:
+    - name: install apache
+	  package
+	    name: {{package_name}}
+		state: present
+	  notify:
+	    - restart and enable apache
+	  when: ansible_facts['os_family'] == "RedHat" or ansible_facts['os_family'] == "Debian"
+	  
+	- name: printing php module
+	  debug:
+	    var: php_modules
+	- name: install php modules
+      package:
+        name: {{item}}
+        state: present	
+      loop: "{{php_modules}}"
+	  
+	- name: Download info php page
+	  get_url:
+	    url: https://marpu.com ## source url
+		dest: /var/www/html/info.php
+		
+	notify:
+	    - restart and enable apache
+	  when: ansible_facts['os_family'] == "RedHat" or ansible_facts['os_family'] == "Debian"
+      
+	  
+  handlers:
+    - name: restart and enable apache
+	  service:
+	    name: {{package_name}}
+		enabled: yes
+		state: restarted 
+	  when: ansible_facts['os_family'] == "RedHat" or ansible_facts['os_family'] == "Debian"
+	
+
+
+###########################################################################
+
+## Ansible Files
+
+* In DevOps Pipelines, it will necessary to download/copy the package
+built by built systemctl (Maven, Msbuild, make) to the Node.
+* To download the files into node use module _get_url_
+* to copy the file from ACS to node
+* Now lets use the same lamp playbook and create a file called as info.php
+* lets add the copy module in play book
+## Copy file from ACS to Node
+## Copy module will help tp copy the file from ACS to Node
+
+- host: all
+  become: yes
+  tasks:
+    - name: fail if it is unsupported OS
+	  fail:
+	    msg: This playbook is supported only redhand and debian
+	  when: ansible_facts['os_family'] != "RedHat" or ansible_facts['os_family'] != "Debian"
+    
+	- name: install apache
+	  package
+	    name: {{package_name}}
+		state: present
+	  notify:
+	    - restart and enable apache
+	
+	  
+	- name: printing php module
+	  debug:
+	    var: php_modules
+	- name: install php modules
+      package:
+        name: {{item}}
+        state: present	
+      loop: "{{php_modules}}"
+	   
+	- name: copy the home page 
+	  copy:
+	    src: info.php
+		dest: /var/www/html/info.php
+	  notify:
+	    - restart and enable apache
+  handlers:
+    - name: restart and enable apache
+	  service:
+	    name: {{package_name}}
+		enabled: yes
+		state: restarted 
+	  
+	
+##########################################################################
+### Adding a custom fail message for unsupported OS
+
+- host: all
+  become: yes
+  tasks:
+    - name: fail if it is unsupported OS
+	  fail:
+	    msg: This playbook is supported only redhand and debian
+	  when: ansible_facts['os_family'] != "RedHat" or ansible_facts['os_family'] != "Debian"
+    
+	- name: install apache
+	  package
+	    name: {{package_name}}
+		state: present
+	  notify:
+	    - restart and enable apache
+		  
+	- name: printing php module
+	  debug:
+	    var: php_modules
+	- name: install php modules
+      package:
+        name: {{item}}
+        state: present	
+      loop: "{{php_modules}}"
+	   
+	- name: Download info php page
+	  get_url:
+	    url: https://marpu.com ## source url
+		dest: /var/www/html/info.php
+	  notify:
+	    - restart and enable apache
+		
+  handlers:
+    - name: restart and enable apache
+	  service:
+	    name: {{package_name}}
+		enabled: yes
+		state: restarted 
+	  
+################################################################
+## Templating
+*whenever you have dynamic value, ansible has a templating system which is widely used in
+python based devlopment. that templating system is jinja
+* Jinja template are the files with extension _.j2_
+
+ansible -m setup -a "filter=*dis*" all
+
+dynamic values will be replaced by actule values
+
+-> readme.txt.j2
+Created by ansible
+os family is {{ ansible_os_family}}
+os distribution is {{ ansible_distribution}}
+version is {{ansible_distribution_version}}
+
+--> configtest.yaml
+- hosts: all
+  become: yes
+  tasks:
+  - name: copy the readme
+    template:
+	  src: readme.txt.j2
+	  dest: /readme.txt
+	  dest: "{{ ansible_user_dir }}/Readme.txt"  ## copy to user home directory
+
+in the directory group_vars host_vars hosts lamp.yml files are there
+
+ansible-playbook -i hosts configtest.yml
+
+
+########################################################
+## Pre-Task and Post-Task
+* pre-Tasks are the tasks which get executed before execution of the task
+* Post-task are the tasks which get executed after execution of the tasks
+
+---
+- host : all
+  become: yes
+  pre_tasks:
+    - name: write a message
+	  debug:
+	    msg: "starting Execution of Playbook"
+  tasks:
+    - name: install tree
+	  package:
+	    name: tree
+		state: present
+  post_tasks:
+    - debug:
+	    msg: Playbook execution completed
+
+############################################################
+* You already have lamp.yaml, now you want to use same lamp installation along with some 
+other configuration
+* you can call existing playbooks using include or import playbooks
+Earler way
+---
+- host:
+  become: yes
+  tasks:
+   - name: call lap playbook
+     import_playbook: lamp.yaml
+   - name: install mysql  
+     package:
+	   name: mysql-server
+	   state: present
+
+### Ansible roles
+
+* its all about reusability
+* using others automation efforts in ansible is simplied using roles
+* any user can share the work by converting playbook to ansible role and submit to 
+ansible community. ansible community which shares these roles is 
+__ Ansible Galaxy__
+
+<<https://galaxy.ansible.com/geerlingguy>>
+
+* Download the Ansible role by executing "ansible-galaxy install geerlingguy.java"
+---
+- host: all
+  become: yes
+  roles:
+    - role: geerlingguy.java
+
+
+### Creating Ansible Roles
+
+** Sample folder structure
+
+* Playbooks
+    * roles
+	    * rolename
+* Login into the ACS and create a new directory and execute the following command
+* ansible-galaxy init <lamp>
+
+* now use lamp playbook to copy tasks in to tasks\main.yml and do the same for handlers
+* if you have any files or templates copy them files or templates folder
+* now cd into playbooks folder and create one more folder called as environment
+%%refer : ref-1 pic%%
+
+main palybook
+---
+- host: webserver
+  become: yes
+  roles:
+    - role: lamp
+	
+################################################################
+## Ansible Parallelism
+* Parallelism can be set in Ansible using an argument __ -- fork___
+* Default value is 5
+* Scenario:
+  * 100 nodes are in inventory and i run "" ansible-playbook test.yml"" this execution happens in 20 batches
+  * 100 nodes are in inventory and i run "" ansible-playbook -f 50 test.yml"", this execution happens in 2 batches
+  * 100 nodes are in inventory and i run "" ansible-playbook -f 500 test.yml"", this execution happens in 1 batches
+
+###
+## Ansible custom facts
+* i have a playbook, inside this playbook i need to decide on some module execution depending
+   on other module execution
+* Eg: only when you create a file then only restart service and do further executions
+* in any case if you want to store the value only till your playbook execution is completed, you can use a module called as __set_fact__
+
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: create a file
+	  file:
+	    path: /temp/test.txt
+	  notify:
+	    - create a facts
+	- name: restart service
+	  service:
+	    name: test
+		state: restarted
+	  when: file_created == yes
+  handlers:
+    - name: create a facts
+	  set_fact:
+	     file_created: yes
+
+
+##########################################################
+## Vault
+* Configuration Management has to deal with passwords or sensitive content
+* We need a machanism to encrypt the sensitive content and thats exactly what ansible-vault does.
+* Execution in ansible requires vault password or password file to passed 
+
+-> ansible-playbook -i hosts --vault-password-file /var/lib/password test.yaml
+
+
+###############################################################
+## Ansible tower
+* Tower provides authentication and reporting features to ansible control server
+* Tower is web based platform for doing what you have done with ACS, we would have an user interface and REST API.
+
+* Terms:
+  * Projects => where your ansible playbook are?
+  * Inventory
+  * job
+  * Schedule jobs
+  * Job Template
+  
+##########################################################
+## Dynamic Inventory
+* if the node list is changing consistently, then how to run ansible
+* Dynamic inventory can be used
+* Dynamic Inventory is any script in any language which returns information
+  about your nodes in json format specified by ansible
+  
+
