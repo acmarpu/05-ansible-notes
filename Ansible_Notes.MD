@@ -1,23 +1,39 @@
-The primary difference for their community versions is that Ansible is an multi-purpose automation tool, 
-where as Terraform is an infrastructure as code tool
+### Ansible vs Terraform – Community Version Difference
+The primary difference between their community versions is that Ansible is a multi-purpose automation tool,
+whereas Terraform is an infrastructure-as-code (IaC) tool.
 
-### Configuration Management tools
-* For any application to work we need some softwares.
-* Options for installing necessary softwares and deploying application
+### Configuration Management Tools
+For any application to work, we need certain software and dependencies installed.
+There are multiple options for installing necessary software and deploying an application:
 
-## Manual
-* Administrator will install the necessary softwares
-* admin will deploy the application
-* probleam
-  * slow
-  * Error Prone
+**1.** Manual Process
+* An administrator installs the required software.
+* The administrator deploys the application.
 
-## Shell/PowerShell Scripts
-* Create a shell/powershellscript to perform deployment
-* Porblems
- * Multipile ways of doing the same activity.  Beacuse it impacts readability and Maintainability
- * Every script has assumptions
- * Script are procedural (how it has to done)
+*Problems:*
+* Slow and time-consuming.
+* Error-prone.
+
+**2.** Shell / PowerShell Scripts
+Create a shell or PowerShell script to perform the deployment.
+
+*Problems:*
+* Multiple ways of doing the same activity, which affects readability and maintainability.
+* Every script has its own assumptions.
+* Scripts are procedural — they focus on how it should be done rather than what needs to be done.
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Configuration Management
 * in this user will write the desired state
