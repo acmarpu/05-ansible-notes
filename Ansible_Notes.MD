@@ -23,6 +23,50 @@ Create a shell or PowerShell script to perform the deployment.
 * Scripts are procedural — they focus on how it should be done rather than what needs to be done.
 
 
+### What is Ansible?
+* Ansible is an open-source automation tool developed by Red Hat.
+
+** It is primarily used for:
+* Configuration Management (installing and configuring software)
+* Application Deployment
+* Task Automation (repetitive admin tasks)
+* Orchestration (managing multiple systems in a sequence)
+* Ansible uses simple YAML files called playbooks to describe automation tasks.
+* It is agentless — no software needs to be installed on the target machines (it connects via SSH or WinRM).
+* Supports idempotence, meaning running the same playbook multiple times won’t cause unnecessary changes.
+
+
+### What is a Configuration Management Tool?
+* A Configuration Management (CM) tool automates the setup, configuration, and maintenance of systems.
+* Instead of telling the system how to do something step-by-step (procedural approach), you declare what the final state should be (declarative approach).
+* CM tools ensure all systems remain in the desired state by:
+* Installing required software packages.
+* Managing configuration files.
+* Ensuring services are running as expected.
+* Examples of Configuration Management tools:
+
+ * Ansible
+ * Puppet
+ * Chef
+ * SaltStack
+
+*Benefits:*
+* Idempotence — consistent results every time.
+* Scalability — manage hundreds or thousands of machines.
+* Repeatability — same configuration can be applied to multiple environments (Dev, Test, Prod).
+* Reduced human error — less manual work means fewer mistakes.
+
+
+
+### Configuration Management
+* In this approach, the user defines the desired state of the system (e.g., "Nginx is installed and running").
+* Scripts are declarative — they describe what needs to be achieved, not the exact step-by-step process.
+* The main goal is to maintain the desired state consistently across all environments.
+* Configuration management tools have an idempotent property, called idempotence.
+* Idempotence means that running the same configuration multiple times will always result in the same system state without causing unintended changes.
+* Changes are applied only when needed — if the system is already in the desired state, no action is taken.
+* Helps in avoiding configuration drift (when systems become inconsistent over time).
+* Makes deployments repeatable and reliable, reducing manual intervention.
 
 
 
@@ -35,11 +79,6 @@ Create a shell or PowerShell script to perform the deployment.
 
 
 
-## Configuration Management
-* in this user will write the desired state
-* Script are Declarative (what has to be done)
-* the major them is to maintain desired state.
-* CM has an idempotent property call as __idempotance__
 
 ## Ansible Falls under Push based Configuration Management
 
